@@ -1,25 +1,26 @@
 var createQueue = require('queue-async')
-  , through = require('through')
   , backoff = require('backoff')
-  , map = require('map-stream')
+  , es = require('event-stream')
   , crypto = require('crypto')
   , xtend = require('xtend')
   , mime = require('mime')
+  , once = require('once')
   , knox = require('knox')
   , url = require('url')
   , fs = require('fs')
 
 module.exports = s3syncer
 
-function s3syncer(db, options) {
+function s3syncer(db, options, log) {
   if (!options) {
-    options = db
+    options = db || {}
     db = false
   }
 
-  options = options || {}
   options.concurrency = options.concurrency || 16
   options.headers = options.headers || {}
+  options.cacheSrc = options.cacheSrc || __dirname + '/.sync'
+  options.cacheDest = options.cacheDest || '/.sync'
 
   var client = knox.createClient(options)
     , queue = createQueue(options.concurrency)
@@ -28,7 +29,7 @@ function s3syncer(db, options) {
     , subdomain = region ? 's3-' + region : 's3'
     , protocol = secure ? 'https' : 'http'
 
-  var stream = map(function(data, next) {
+  var stream = es.map(function(data, next) {
     queue.defer(function(details, done) {
       details.fullPath = details.fullPath || details.src
       details.path = details.path || details.dest
@@ -38,6 +39,9 @@ function s3syncer(db, options) {
       })
     }, data)
   })
+
+  stream.getCache = getCache
+  stream.putCache = putCache
 
   function syncFile(details, next) {
     var absolute = details.fullPath
@@ -72,6 +76,7 @@ function s3syncer(db, options) {
 
     function checkForUpload(next) {
       client.headFile(relative, function(err, res) {
+        if (err) return next(err)
         if (res.statusCode === 404 || res.headers.etag !== '"' + details.md5 + '"') return uploadFile(details, next)
         if (res.statusCode >= 300) return next(new Error('Bad status code: ' + res.statusCode))
         return next(null, details)
@@ -101,13 +106,48 @@ function s3syncer(db, options) {
       client.putFile(absolute, relative, headers, function(err, res) {
         if (!err) {
           if (res.statusCode < 300) return next(null, details)
+          log.error(absolute + ' can\'t be upload')
           err = new Error('Bad status code: ' + res.statusCode)
         }
+
+        log.ok(absolute + ' --> ' + relative)
 
         lasterr = err
         off.backoff()
       })
     }).backoff()
+  }
+
+  function getCache(callback) {
+    callback = once(callback)
+
+    client.getFile(options.cacheDest, function(err, res) {
+      if (err) return callback(err)
+      if (res.statusCode === 404) return callback(null)
+
+      es.pipeline(
+          res
+        , es.split()
+        , es.parse()
+        , db.createWriteStream()
+      ).once('close', callback)
+       .once('error', callback)
+    })
+  }
+
+  function putCache(callback) {
+    callback = once(callback)
+
+    db.createReadStream()
+      .pipe(es.stringify())
+      .pipe(fs.createWriteStream(options.cacheSrc))
+      .once('error', callback)
+      .once('close', function() {
+        client.putFile(options.cacheSrc, options.cacheDest, function(err) {
+          if (err) return callback(err)
+          fs.unlink(options.cacheSrc, callback)
+        })
+     })
   }
 
   return stream

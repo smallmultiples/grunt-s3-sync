@@ -56,7 +56,6 @@ module.exports = function(grunt) {
           fs.rmdirSync('.tmp')
           stream.end()
         }
-
     }
 
     // Upload each file

@@ -8,37 +8,44 @@
 
 'use strict';
 
+
 module.exports = function(grunt) {
+    // You can use a level (http://github.com/level/level) database
+    // to use as a local cache for file uploads. This way, you can minimize
+    // the frequency you have to hit S3 and speed up the whole process considerably.
+    var db = require('level')('.cache')
 
     // Project configuration.
     grunt.initConfig({
         // Configuration to be run
         's3-sync': {
-            options: {},
-            stage: {
-                files: [
+            options: {
+                  key   : 'KEY'
+                , secret: 'SECRET'
+                , bucket: 'BUCKET'
+                , db    : db
+            }
+          , stage: {
+                options: {
+                    bucket: 'BUCKET_STAGING'
+                }
+              , files: [
                     {
-                        src:  'tasks/**/*.js',
-                        dest: 'js/',
-                        gzip: true
+                        src:  'tasks/**/*.js'
+                      , dest: 'js/'
+                      , gzip: true
                     },
                     {
-                        src:  'Gruntfile.js',
-                        dest: 'Gruntfile.js'
+                        src:  'Gruntfile.js'
+                      , dest: 'Gruntfile.js'
                     },
                     {
-                        src:  'foo/bar',
-                        dest: 'none'
+                        src:  'foo/bar'
+                      , dest: 'none'
                     }
                 ]
             }
-        },
-
-        // Unit tests.
-        nodeunit: {
-            tests: ['test/*_test.js']
         }
-
     })
 
     // Actually load this plugin's task(s).

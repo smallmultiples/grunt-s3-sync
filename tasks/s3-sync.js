@@ -33,11 +33,18 @@ module.exports = function(grunt) {
       file.src.forEach(function(src) {
         // GZip the file
         if (file.gzip) {
-          // @TODO check that it's a Buffer
-          src = fs.createReadStream(src).pipe(zlib.createGzip())
+          return fs.readFile(src, function(err, data) {
+            var buffer = new Buffer(data)
+            zlib.gzip(buffer, function(err, data) {
+              if (!err) {
+                stream.write({
+                    src: data
+                  , dest: file.dest
+                })
+              }
+            })
+          })
         }
-
-        console.log(src)
 
         stream.write({
             src: src

@@ -1,95 +1,100 @@
-# s3-sync #
+# grunt-s3-sync
 
-A streaming upload tool for Amazon S3, taking input from a
-[`readdirp`](http://npmjs.org/package/readdirp) stream, and outputting the
-resulting files.
+> A streaming interface for uploading multiple files to S3
 
-s3-sync is also optionally backed by a [level](http://github.com/level/level)
-database to use as a local cache for file uploads. This way, you can minimize
-the frequency you have to hit S3 and speed up the whole process considerably.
+## Getting Started
+This plugin requires Grunt `~0.4.1`
 
-You can use this to sync complete directory trees with S3 when deploying static
-websites. It's a work in progress, so expect occasional API changes and
-additional features.
+If you haven't used [Grunt](http://gruntjs.com/) before, be sure to check out the [Getting Started](http://gruntjs.com/getting-started) guide, as it explains how to create a [Gruntfile](http://gruntjs.com/sample-gruntfile) as well as install and use Grunt plugins. Once you're familiar with that process, you may install this plugin with this command:
 
-## Installation ##
-
-``` bash
-npm install s3-sync
+```shell
+npm install grunt-s3-sync --save-dev
 ```
 
-## Usage ##
+Once the plugin has been installed, it may be enabled inside your Gruntfile with this line of JavaScript:
 
-### `require('s3-sync').createStream([db, ]options)` ###
+```js
+grunt.loadNpmTasks('grunt-s3-sync');
+```
 
-Creates an upload stream. Passes its options to [knox](http://ghub.io/knox),
-so at a minimum you'll need:
+## The "s3-sync" task
 
-* `key`: Your AWS access key.
-* `secret`: Your AWS secret.
-* `bucket`: The bucket to upload to.
+### Overview
+In your project's Gruntfile, add a section named `s3-sync` to the data object passed into `grunt.initConfig()`.
 
-The following are also specific to s3-sync:
+### Options
 
-* `concurrency`: The maximum amount of files to upload concurrently.
-* `headers`: Additional headers to include on each file.
+#### options.key
+Type: `String`
 
-If you want more control over the files and their locations that you're
-uploading, you can write file objects directly to the stream, e.g.:
+Your AWS access key, **mandatory**.
 
-``` javascript
-var stream = s3sync({
-    key: process.env.AWS_ACCESS_KEY
-  , secret: process.env.AWS_SECRET_KEY
-  , bucket: 'sync-testing'
-})
+#### options.secret
+Type: `String`
 
-stream.write({
-    src: __filename
-  , dest: '/uploader.js'
-})
+Your AWS secret, **mandatory**.
 
-stream.end({
-    src: __dirname + '/README.md'
-  , dest: '/README.md'
+#### options.bucket
+Type: `String`
+
+The bucket to upload to, **mandatory**.
+
+#### options.concurrency
+Type: `Number`
+
+The maximum amount of files to upload concurrently.
+
+#### options.headers
+Type: `String`
+
+Additional headers to include on each file.
+
+#### options.db
+Type: `Object`
+
+A [level](http://github.com/level/level) database to use as a local cache
+for file uploads. This way, you can minimize the frequency you have to
+hit S3 and speed up the whole process considerably.
+
+#### files.gzip
+Type: `Boolean`
+
+Files are based on Grunt file
+
+#### Note
+The project is based on [knox](http://ghub.io/knox), all knox options are available in the
+`options` object.
+
+### Usage Examples
+
+```js
+grunt.initConfig({
+  s3-sync: {
+    options: {
+        key   : 'KEY'
+      , secret: 'SECRET'
+      , bucket: 'BUCKET'
+      , db    : db
+    },
+    your_target: {
+        files: [
+            {
+                src:  'tasks/**/*.js'
+              , dest: 'js/'
+              , gzip: true
+            },
+            {
+                src:  'Gruntfile.js'
+              , dest: 'Gruntfile.js'
+            }
+        ]
+    },
+  },
 })
 ```
 
-Where `src` is the *absolute* local file path, and `dest` is the location to
-upload the file to on the S3 bucket.
+## Contributing
+In lieu of a formal styleguide, take care to maintain the existing coding style.
 
-`db` is an optional argument - pass it a *level* database and it'll keep a
-local cache of file hashes, keeping S3 requests to a minimum.
-
-## Example ##
-
-Here's an example using `level` and `readdirp` to upload a local directory to
-an S3 bucket:
-
-``` javascript
-var level = require('level')
-  , s3sync = require('s3-sync')
-  , readdirp = require('readdirp')
-
-// To cache the S3 HEAD results and speed up the
-// upload process. Usage is optional.
-var db = level(__dirname + '/cache')
-
-var files = readdirp({
-    root: __dirname
-  , directoryFilter: ['!.git', '!cache']
-})
-
-// Takes the same options arguments as `knox`,
-// plus some additional options listed above
-var uploader = s3sync(db, {
-    key: process.env.AWS_ACCESS_KEY
-  , secret: process.env.AWS_SECRET_KEY
-  , bucket: 'sync-testing'
-  , concurrency: 16
-}).on('data', function(file) {
-  console.log(file.fullPath + ' -> ' + file.url)
-})
-
-files.pipe(uploader)
-```
+## Release History
+* 2013-07-25   v0.1.0   First release

@@ -10,12 +10,15 @@
 
 // External libs.
 var s3sync = require('s3-sync')
+  , rimraf = require('rimraf')
+  , path = require('path')
   , zlib = require('zlib')
   , fs = require('fs')
 
 module.exports = function(grunt) {
   grunt.registerMultiTask('s3-sync', 'A streaming interface for uploading multiple files to S3.', function() {
     var options = this.options()
+      , tmp = path.resolve('.tmp')
       , db
     if (options.db) {
       db = options.db
@@ -25,7 +28,7 @@ module.exports = function(grunt) {
       options = false
     }
 
-    // // Init the stream
+    // Init the stream
     var stream = s3sync(db, options)
 
     // Log upload message
@@ -53,8 +56,9 @@ module.exports = function(grunt) {
         })
         // When all the files are uploaded
         if (--nbFiles === 0) {
-          fs.rmdirSync('.tmp')
-          stream.end()
+          rimraf(tmp, function() {
+            stream.end()
+          })
         }
     }
 
@@ -65,7 +69,7 @@ module.exports = function(grunt) {
         if (file.gzip) {
           var gzip = zlib.createGzip()
             , input = fs.createReadStream(src)
-            , outputSrc = '.tmp/' + src
+            , outputSrc = path.resolve(tmp, src)
             , output = fs.createWriteStream(outputSrc)
 
           input.pipe(gzip).pipe(output)

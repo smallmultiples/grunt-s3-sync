@@ -9,10 +9,9 @@
 'use strict';
 
 // External libs.
-var s3sync = require('./lib/s3-sync')
+var s3sync = require('s3-sync')
   , zlib = require('zlib')
   , fs = require('fs')
-
 
 module.exports = function(grunt) {
   grunt.registerMultiTask('s3-sync', 'A streaming interface for uploading multiple files to S3.', function() {
@@ -27,7 +26,14 @@ module.exports = function(grunt) {
     }
 
     // Init the stream
-    var stream = s3sync(db, options, grunt.log)
+    var stream = s3sync(db, options)
+
+    stream.on('data', function(file) {
+      grunt.log.ok(file.absolute, file.relative)
+    })
+    stream.on('fail', function(err) {
+      grunt.log.error(err.toString())
+    })
 
     this.files.forEach(function(file) {
       file.src.forEach(function(src) {

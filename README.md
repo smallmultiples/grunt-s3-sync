@@ -45,21 +45,46 @@ Type: `Number`
 The maximum amount of files to upload concurrently.
 
 #### options.headers
-Type: `String`
+Type: `Object`
 
 Additional headers to include on each file.
 
 #### options.db
-Type: `Object`
+Type: `Function`
 
 A [level](http://github.com/level/level) database to use as a local cache
 for file uploads. This way, you can minimize the frequency you have to
 hit S3 and speed up the whole process considerably.
 
+Needs to be passed as a function that returns the db instance - otherwise
+it'll get mangled by grunt's option API.
+
 #### files.gzip
 Type: `Boolean`
 
-Files are based on Grunt file
+Pass this to a files object to enable gzip compression, e.g.
+
+``` javascript
+{
+  src: '/**/*.html',
+  dest: '/',
+  gzip: true
+}
+```
+
+#### files.root
+Type: `String`
+
+Pass this to a files object to determine the "root" directory for uploads, e.g.
+the following will upload the files in `build` to the bucket's root:
+
+``` javascript
+{
+  root: __dirname + 'build'
+  src: 'build/**'
+  dest: '/'
+}
+```
 
 #### Note
 The project is based on [knox](http://ghub.io/knox), all knox options are available in the

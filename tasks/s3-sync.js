@@ -13,19 +13,21 @@ var s3sync = require('s3-sync')
   , rimraf = require('rimraf')
   , path = require('path')
   , zlib = require('zlib')
+  , url = require('url')
   , fs = require('fs')
 
 module.exports = function(grunt) {
   grunt.registerMultiTask('s3-sync', 'A streaming interface for uploading multiple files to S3.', function() {
     var options = this.options()
       , tmp = path.resolve('.tmp')
-      , db
+      , done = this.async()
+      , db = null
+
+    options.headers = options.headers || {}
+    options.headers['Content-Encoding'] = 'gzip'
+
     if (options.db) {
-      db = options.db
-      delete options.db
-    } else {
-      db = options
-      options = false
+      db = options.db()
     }
 
     // Init the stream
@@ -33,52 +35,70 @@ module.exports = function(grunt) {
 
     // Log upload message
     stream.on('data', function(file) {
-      grunt.log.ok(file.absolute, file.relative)
-    })
-    stream.on('fail', function(err) {
-      grunt.log.error(err.toString())
+      if (file.cached) {
+        grunt.log.ok('[cached] ' + file.url)
+      } else
+      if (file.fresh) {
+        grunt.log.success('>> [uploaded] ' + file.url)
+      } else {
+        grunt.log.ok('[exists] ' + file.url)
+      }
+
+      if (--fileCount > 0) return
+
+      rimraf(tmp, function() {
+        stream.end()
+        done()
+      })
     })
 
-    // Get the actual number of files to upload
-    var nbFiles = grunt.util._.chain(this.files)
-    .pluck('src')
-    .pluck('length')
-    .reduce(function(a, b) {
-        return a + b
+    stream.on('fail', function(err) {
+      grunt.log.fail(err.toString())
     })
-    .value()
+
+    var actualFiles = this.files.map(function(set) {
+      return set.src.filter(function(file) {
+        return grunt.file.isFile(file)
+      })
+    }).reduce(function(a, b) {
+      return a.concat(b)
+    }, [])
+
+    var fileCount = actualFiles.length
 
     // Handle the upload for each files
     var uploadFile = function(src, dest) {
-        stream.write({
-            src: src
-          , dest: dest
-        })
-        // When all the files are uploaded
-        if (--nbFiles === 0) {
-          rimraf(tmp, function() {
-            stream.end()
-          })
-        }
+      stream.write({
+          src: src
+        , dest: dest
+      })
     }
 
     // Upload each file
     this.files.forEach(function(file) {
-      file.src.forEach(function(src) {
-        // GZip the file
-        if (file.gzip) {
-          var gzip = zlib.createGzip()
-            , input = fs.createReadStream(src)
-            , outputSrc = path.resolve(tmp, src)
-            , output = fs.createWriteStream(outputSrc)
+      file.src.filter(function(file) {
+        return actualFiles.indexOf(file) !== -1
+      }).forEach(function(src) {
+        var absolute = path.resolve(src)
+        var dest = url.resolve(file.dest, path.relative(file.root, src))
 
-          input.pipe(gzip).pipe(output)
-          output.on('close', function() {
-            uploadFile(src, file.dest)
+        if (!file.gzip) return uploadFile(absolute, dest)
+
+        // GZip the file
+        var outputSrc = path.resolve(tmp, src)
+
+        grunt.file.mkdir(path.dirname(outputSrc))
+
+        var gzip = zlib.createGzip()
+          , input = fs.createReadStream(absolute)
+          , output = fs.createWriteStream(outputSrc)
+
+        input
+          .pipe(gzip)
+          .pipe(output)
+          .once('close', function() {
+            uploadFile(outputSrc, dest)
           })
-        } else {
-          uploadFile(src, file.dest)
-        }
       })
     })
   })

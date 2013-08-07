@@ -122,5 +122,6 @@ grunt.initConfig({
 In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
-* 2013-07-25   v0.1.1   Edit gzipping handlin
-* 2013-07-25   v0.1.0   First release
+* 2013-08-07   v0.2.1   New s3-sync version
+* 2013-07-25   v0.1.1   Edit gzipping handlin
+* 2013-07-25   v0.1.0   First release

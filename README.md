@@ -92,13 +92,17 @@ The project is based on [knox](http://ghub.io/knox), all knox options are availa
 
 ### Usage Examples
 
+Template strings in grunt will allow you to easily include values from other files. The below example
+demonstrates loading aws settings from another file, Where grunt-aws.json is just a json key:value file like package.json. (Special thanks to @nanek) This is **important because you should never check in your S3 credentials to github! Load them from an external file that is outside of the repo.**
+
 ```js
 grunt.initConfig({
+  aws: grunt.file.readJSON('~/grunt-aws.json'),
   s3-sync: {
     options: {
-        key   : 'KEY'
-      , secret: 'SECRET'
-      , bucket: 'BUCKET'
+        key: '<%= aws.key %>'
+      , secret: '<%= aws.secret %>'
+      , bucket: '<%= aws.bucket %>'
       , db    : db
     },
     your_target: {
@@ -118,10 +122,11 @@ grunt.initConfig({
 })
 ```
 
+
 ## Contributing
 In lieu of a formal styleguide, take care to maintain the existing coding style.
 
 ## Release History
 * 2013-08-07   v0.2.1   New s3-sync version
-* 2013-07-25   v0.1.1   Edit gzipping handlin
+* 2013-07-25   v0.1.1   Edit gzipping handling
 * 2013-07-25   v0.1.0   First release

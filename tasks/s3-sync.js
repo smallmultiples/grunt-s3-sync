@@ -24,7 +24,9 @@ module.exports = function(grunt) {
       , db = null
 
     options.headers = options.headers || {}
-    options.headers['Content-Encoding'] = 'gzip'
+    if(!options.headers['Content-Encoding']){
+      options.headers['Content-Encoding'] = 'gzip'
+    }
 
     if (options.db) {
       db = options.db()

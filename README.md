@@ -66,6 +66,7 @@ Pass this to a files object to enable gzip compression, e.g.
 
 ``` javascript
 {
+  root: __dirname
   src: '/**/*.html',
   dest: '/',
   gzip: true
@@ -75,8 +76,10 @@ Pass this to a files object to enable gzip compression, e.g.
 #### files.root
 Type: `String`
 
-Pass this to a files object to determine the "root" directory for uploads, e.g.
+This is a mandatory argument. Pass this to a files object to determine the "root" directory for uploads, e.g.
 the following will upload the files in `build` to the bucket's root:
+
+The purpose is to determine the base path of the files so that relative paths from that base path `root` can be preserved when uploaded to S3. Without it, we don't know relative to what to make the paths on S3.
 
 ``` javascript
 {

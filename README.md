@@ -111,12 +111,14 @@ grunt.initConfig({
     your_target: {
         files: [
             {
-                src:  'tasks/**/*.js'
+                root: __dirname
+              , src:  'tasks/**/*.js'
               , dest: 'js/'
               , gzip: true
             },
             {
-                src:  'Gruntfile.js'
+                root: __dirname
+              , src:  'Gruntfile.js'
               , dest: 'Gruntfile.js'
             }
         ]

@@ -32,7 +32,8 @@
     "level": "~0.10.0",
     "s3-sync": "~0.3.0",
     "rimraf": "~2.2.2",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "async": "~0.2.9"
   },
   "devDependencies": {},
   "peerDependencies": {

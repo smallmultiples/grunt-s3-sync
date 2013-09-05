@@ -9,9 +9,10 @@
 'use strict';
 
 // External libs.
-var  through = require('through')
+var through = require('through')
   , s3sync = require('s3-sync')
   , rimraf = require('rimraf')
+  , async = require('async')
   , path = require('path')
   , zlib = require('zlib')
   , url = require('url')
@@ -60,7 +61,7 @@ module.exports = function(grunt) {
     })
 
     stream.on('fail', function(err) {
-      grunt.log.fail(err.toString())
+      grunt.log.fail(err.message)
     })
 
     var actualFiles = this.files.map(function(set) {
@@ -84,14 +85,19 @@ module.exports = function(grunt) {
 
     // Upload each file
     this.files.forEach(function(file) {
-      file.src.filter(function(file) {
+      var list = file.src.filter(function(file) {
         return actualFiles.indexOf(file) !== -1
-      }).forEach(function(src) {
+      })
+
+      async.mapLimit(list, 25, function(src, next) {
         var absolute = path.resolve(src)
         var dest = url.resolve(file.dest, path.relative(file.root, src))
         var useGzip = 'gzip' in file ? !!file.gzip : !!options.gzip
 
-        if (!useGzip) return uploadFile(absolute, absolute, dest)
+        if (!useGzip) {
+          uploadFile(absolute, absolute, dest)
+          return next()
+        }
 
         // GZip the file
         var outputSrc = path.resolve(tmp, src)
@@ -105,9 +111,13 @@ module.exports = function(grunt) {
         input
           .pipe(gzip)
           .pipe(output)
+          .once('error', next)
           .once('close', function() {
             uploadFile(outputSrc, absolute, dest)
+            next()
           })
+      }, function(err) {
+        if (err) throw err
       })
     })
   })

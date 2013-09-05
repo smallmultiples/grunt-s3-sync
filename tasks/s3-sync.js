@@ -25,12 +25,16 @@ module.exports = function(grunt) {
       , db = null
 
     options.headers = options.headers || {}
-    if(options.gzip){
+    if (options.gzip) {
       options.headers['Content-Encoding'] = 'gzip'
     }
 
     if (options.db) {
       db = options.db()
+    }
+
+    options.hashKey = function(details) {
+      return details.orig
     }
 
     // Init the stream
@@ -70,10 +74,11 @@ module.exports = function(grunt) {
     var fileCount = actualFiles.length
 
     // Handle the upload for each files
-    var uploadFile = function(src, dest) {
+    var uploadFile = function(src, orig, dest) {
       stream.write({
           src: src
         , dest: dest
+        , orig: orig
       })
     }
 
@@ -85,8 +90,8 @@ module.exports = function(grunt) {
         var absolute = path.resolve(src)
         var dest = url.resolve(file.dest, path.relative(file.root, src))
         var useGzip = 'gzip' in file ? !!file.gzip : !!options.gzip
-        console.log('useGzip:', useGzip)
-        if (!useGzip) return uploadFile(absolute, dest)
+
+        if (!useGzip) return uploadFile(absolute, absolute, dest)
 
         // GZip the file
         var outputSrc = path.resolve(tmp, src)
@@ -101,7 +106,7 @@ module.exports = function(grunt) {
           .pipe(gzip)
           .pipe(output)
           .once('close', function() {
-            uploadFile(outputSrc, dest)
+            uploadFile(outputSrc, absolute, dest)
           })
       })
     })

@@ -9,7 +9,8 @@
 'use strict';
 
 // External libs.
-var s3sync = require('s3-sync')
+var  through = require('through')
+  , s3sync = require('s3-sync')
   , rimraf = require('rimraf')
   , path = require('path')
   , zlib = require('zlib')
@@ -83,8 +84,9 @@ module.exports = function(grunt) {
       }).forEach(function(src) {
         var absolute = path.resolve(src)
         var dest = url.resolve(file.dest, path.relative(file.root, src))
-
-        if (!file.gzip) return uploadFile(absolute, dest)
+        var useGzip = 'gzip' in file ? !!file.gzip : !!options.gzip
+        console.log('useGzip:', useGzip)
+        if (!useGzip) return uploadFile(absolute, dest)
 
         // GZip the file
         var outputSrc = path.resolve(tmp, src)

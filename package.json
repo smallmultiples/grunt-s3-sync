@@ -31,7 +31,8 @@
   "dependencies": {
     "level": "~0.10.0",
     "s3-sync": "~0.2.0",
-    "rimraf": "~2.2.2"
+    "rimraf": "~2.2.2",
+    "through": "~2.3.4"
   },
   "devDependencies": {},
   "peerDependencies": {

@@ -73,6 +73,11 @@ Pass this to a files object to enable gzip compression, e.g.
 }
 ```
 
+#### files.compressionLevel
+Type: `Number`
+
+This argument will set compression to the desired level. The default is 6 and the maximum you can set is 9. This is only useful if `gzip: true`. You can find more about this [here](http://zlib.net/manual.html#Advanced).
+
 #### files.root
 Type: `String`
 
@@ -101,7 +106,7 @@ demonstrates loading aws settings from another file, Where grunt-aws.json is jus
 ```js
 grunt.initConfig({
   aws: grunt.file.readJSON('~/grunt-aws.json'),
-  s3-sync: {
+  's3-sync': {
     options: {
         key: '<%= aws.key %>'
       , secret: '<%= aws.secret %>'
@@ -115,6 +120,13 @@ grunt.initConfig({
               , src:  'tasks/**/*.js'
               , dest: 'js/'
               , gzip: true
+            },
+            {
+                root: 'dist'
+              , src: ['dist/**', '!dist/img/**']  // Don't compress images!
+              , dest: '/<%= pkg.version %>/'
+              , gzip: true
+              , compressionLevel: 9  // Max compression
             },
             {
                 root: __dirname

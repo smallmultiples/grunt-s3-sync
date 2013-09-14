@@ -40,6 +40,12 @@ module.exports = function(grunt) {
                       , dest: 'Gruntfile.js'
                     },
                     {
+                        src 'foo/**/*.css'
+                        dest: 'css/'
+                        gzip: true
+                        compressionLevel: 9
+                    },
+                    {
                         src:  'foo/bar'
                       , dest: 'none'
                     }

@@ -93,6 +93,7 @@ module.exports = function(grunt) {
         var absolute = path.resolve(src)
         var dest = url.resolve(file.dest, path.relative(file.root, src))
         var useGzip = 'gzip' in file ? !!file.gzip : !!options.gzip
+        var gzipCompLevel =  'compressionLevel' in file ? !!file.compressionLevel : !!options.compressionLevel
 
         if (!useGzip) {
           uploadFile(absolute, absolute, dest)
@@ -104,7 +105,7 @@ module.exports = function(grunt) {
 
         grunt.file.mkdir(path.dirname(outputSrc))
 
-        var gzip = zlib.createGzip()
+        var gzip = zlib.createGzip({ level: gzipCompLevel })
           , input = fs.createReadStream(absolute)
           , output = fs.createWriteStream(outputSrc)
 

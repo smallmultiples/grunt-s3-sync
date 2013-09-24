@@ -1,7 +1,7 @@
 {
   "name": "grunt-s3-sync",
   "description": "A streaming interface for uploading multiple files to S3",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "homepage": "https://github.com/smallmultiples/grunt-s3-sync",
   "author": {
     "name": "Small Multiples",

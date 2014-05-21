@@ -44,6 +44,11 @@ Type: `Number`
 
 The maximum amount of files to upload concurrently.
 
+#### options.retries
+Type: `Number`
+
+The maximum number of times to retry uploading a file before failing. By default the value is 7.
+
 #### options.headers
 Type: `Object`
 

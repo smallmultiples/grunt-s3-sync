@@ -1,3 +1,6 @@
+# NOT MAINTAINED ANYMORE
+You can see our [Gulp modules] if you're interested
+
 # grunt-s3-sync
 
 > A streaming interface for uploading multiple files to S3
@@ -152,3 +155,5 @@ In lieu of a formal styleguide, take care to maintain the existing coding style.
 * 2013-08-07   v0.2.1   New s3-sync version
 * 2013-07-25   v0.1.1   Edit gzipping handling
 * 2013-07-25   v0.1.0   First release
+
+[Gulp modules]: https://github.com/smallmultiples/gulp-modules
